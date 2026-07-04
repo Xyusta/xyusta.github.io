@@ -290,39 +290,36 @@
             modal.style.display = "none";
         }
 
-        function logAttempt(day, guess) {
-            if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
+        function logAttempt(day, guess, status) {
+    if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
 
-            // Sending as plain text prevents CORS preflight issues on static pages
-            fetch(TRACKING_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ day: day, guess: guess })
-            }).catch(error => console.error("Error logging attempt:", error));
+    fetch(TRACKING_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ day: day, guess: guess, status: status })
+    }).catch(error => console.error("Error logging attempt:", error));
+}
+
+function checkAnswer() {
+    const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+    const isCorrect = currentDayObject.answer.includes(userAnswer);
+
+    if (isCorrect) {
+        logAttempt(currentDayObject.day, userAnswer, "Correct"); // Log the win
+        
+        if (!solvedDays.includes(currentDayObject.day)) {
+            solvedDays.push(currentDayObject.day);
+            localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
         }
+        
+        document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
+        showRewardUI();
+    } else {
+        logAttempt(currentDayObject.day, userAnswer, "Incorrect"); // Log the fail
 
-        function checkAnswer() {
-            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
-            
-            // Check if the user's answer exists in the array of accepted answers
-            const isCorrect = currentDayObject.answer.includes(userAnswer);
-
-            if (isCorrect) {
-                if (!solvedDays.includes(currentDayObject.day)) {
-                    solvedDays.push(currentDayObject.day);
-                    localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
-                }
-                
-                document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
-                showRewardUI();
-            } else {
-                // Log the incorrect attempt to the Google Sheet
-                logAttempt(currentDayObject.day, userAnswer);
-
-                // Trigger visual shake feedback
-                document.getElementById('feedbackMessage').style.display = "block";
-                const input = document.getElementById('answerInput');
-                input.style.transform = "translateX(-10px)";
+        document.getElementById('feedbackMessage').style.display = "block";
+        const input = document.getElementById('answerInput');
+        input.style.transform = "translateX(-10px)";
                 setTimeout(() => input.style.transform = "translateX(10px)", 50);
                 setTimeout(() => input.style.transform = "translateX(-10px)", 100);
                 setTimeout(() => input.style.transform = "translateX(0)", 150);

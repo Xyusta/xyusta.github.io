@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bryce's 25 Days of Christmas Wishlist</title>
     <style>
-        /* Ensures padding and borders don't add to the width of elements */
         * {
             box-sizing: border-box;
         }
@@ -34,7 +33,7 @@
         .puzzle-wrapper {
             margin: 0 auto 40px auto;
             max-width: 600px; 
-            width: 100%; /* Ensures it scales down on smaller screens */
+            width: 100%; 
         }
         .puzzle-container {
             display: grid;
@@ -111,7 +110,7 @@
         
         input[type="text"] {
             padding: 12px;
-            width: 90%; /* Increased relative width slightly for padding safety */
+            width: 90%; 
             margin-top: 15px;
             border: 2px solid #0b3d0b;
             border-radius: 8px;
@@ -152,7 +151,7 @@
             margin-top: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             transition: transform 0.2s;
-            word-wrap: break-word; /* Prevents long text from breaking the button */
+            word-wrap: break-word; 
         }
         .giftful-btn:hover {
             transform: scale(1.05);
@@ -178,47 +177,31 @@
 
         /* --- MOBILE RESPONSIVE TWEAKS --- */
         @media (max-width: 600px) {
-            body {
-                padding: 10px; /* Less empty space on the edges */
-            }
-            h1 {
-                font-size: 1.8em; /* Shrink title */
-            }
-            p {
-                font-size: 1em;
-            }
-            .puzzle-container {
-                border-width: 4px; /* Thinner border to maximize puzzle space */
-            }
+            body { padding: 10px; }
+            h1 { font-size: 1.8em; }
+            p { font-size: 1em; }
+            .puzzle-container { border-width: 4px; }
             .puzzle-piece {
-                font-size: 1.2em; /* Prevents numbers from overflowing the small boxes */
+                font-size: 1.2em; 
                 border-width: 1px;
             }
             .modal-content {
-                padding: 20px 15px; /* Less inner padding so text has room to breathe */
+                padding: 20px 15px; 
                 width: 95%;
-                margin: 25% auto; /* Pushes it down slightly so the mobile keyboard doesn't cover the input */
+                margin: 25% auto; 
             }
             .close {
                 right: 15px;
                 font-size: 28px;
             }
-            #modalDayTitle {
-                font-size: 1.8em !important;
-            }
-            #riddleText {
-                font-size: 1.1em !important;
-            }
-            input[type="text"] {
-                font-size: 1em;
-            }
+            #modalDayTitle { font-size: 1.8em !important; }
+            #riddleText { font-size: 1.1em !important; }
+            input[type="text"] { font-size: 1em; }
             button, .giftful-btn {
                 font-size: 1em;
                 padding: 12px 16px;
             }
-            .revealed-item h3 {
-                font-size: 1.5em;
-            }
+            .revealed-item h3 { font-size: 1.5em; }
         }
     </style>
 </head>
@@ -276,7 +259,7 @@
             { day: 13, riddle: "What was my jersey number my freshman year of highschool?", answer: ["8", "eight"], giftfulLink: "https://giftful.com/link-13" },
             { day: 14, riddle: "True or False, I have 20:20 vision?", answer: ["false", "f"], giftfulLink: "https://giftful.com/link-14" },
             { day: 15, riddle: "Speaking of vision, what do I struggle to see sometimes?", answer: ["colors", "color"], giftfulLink: "https://giftful.com/link-15" },
-            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["french vanilla", "dunkin french vanilla", "vanilla sweet cream cold brea", "black", "house brew"], giftfulLink: "https://giftful.com/link-16" }, 
+            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["oscilloscope"], giftfulLink: "https://giftful.com/link-16" }, 
             { day: 17, riddle: "Some people are book worms, due to my hoarding tendencies I happen to be a book dragon... how many books are required to be considered a private library?", answer: ["1000", "1,000", "one thousand"], giftfulLink: "https://giftful.com/link-17" },
             { day: 18, riddle: "What is my go to type of beer?", answer: ["hazy ipa", "ipa", "hazy"], giftfulLink: "https://giftful.com/link-18" },
             { day: 19, riddle: "What is my favorite Disney park?", answer: ["epcot"], giftfulLink: "https://giftful.com/link-19" },
@@ -284,7 +267,7 @@
             { day: 21, riddle: "I happen to enjoy gaming, to do so I have built 2 of these?", answer: ["computers", "pcs", "computer", "pc"], giftfulLink: "https://giftful.com/link-21" },
             { day: 22, riddle: "What book series did Khali get her name from?", answer: ["game of thrones", "got", "a song of ice and fire", "asoiaf"], giftfulLink: "https://giftful.com/link-22" },
             { day: 23, riddle: "How long, to the closest year, have Rachel and I been dating?", answer: ["5", "five", "5 years", "five years"], giftfulLink: "https://giftful.com/link-23" },
-            { day: 24, riddle: "Where did my mom come up with my name?", answer: ["a favorite student teacher", "student teacher", "her student teacher", "a student"], giftfulLink: "https://giftful.com/link-24" },
+            { day: 24, riddle: "Where did my mom come up with my name?", answer: ["a favorite student", "student", "her student", "a student"], giftfulLink: "https://giftful.com/link-24" },
             { day: 25, riddle: "What is Khaleesi's full legal name?", answer: ["daenerys stormborn of the house targaryen, first of her name, the unburnt, queen of the andals, the rhoynar, and the first men, protector of the seven kingdoms, the khaleesi of the great grass sea, the breaker of chains, and the mother of dragons"], giftfulLink: "https://giftful.com/link-25" }
         ];
 
@@ -349,12 +332,75 @@
             }).catch(error => console.error("Error logging attempt:", error));
         }
 
+        // --- FUZZY MATCHING HELPERS ---
+
+        // Removes punctuation, extra spaces, and converts to lowercase
+        function cleanString(str) {
+            return str.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s{2,}/g, " ").trim().toLowerCase();
+        }
+
+        // Calculates similarity percentage between two strings (0.0 to 1.0)
+        function getSimilarity(s1, s2) {
+            let longer = s1;
+            let shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            let longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+            
+            let costs = [];
+            for (let i = 0; i <= longer.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= shorter.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (longer.charAt(i - 1) !== shorter.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[shorter.length] = lastValue;
+            }
+            return (longerLength - costs[shorter.length]) / parseFloat(longerLength);
+        }
+
         function checkAnswer() {
-            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
-            const isCorrect = currentDayObject.answer.includes(userAnswer);
+            // Grab exactly what the user typed
+            const rawInput = document.getElementById('answerInput').value;
+            // Clean it up for the algorithm
+            const userInput = cleanString(rawInput);
+            
+            // Create an alphabetically sorted version of the user's input for order-independent checking
+            const sortedUserInput = userInput.split(' ').sort().join(' ');
+            
+            let isCorrect = false;
+
+            // Check against all variations in the answer array
+            for (let acceptedAnswer of currentDayObject.answer) {
+                const target = cleanString(acceptedAnswer);
+                const sortedTarget = target.split(' ').sort().join(' ');
+                
+                // Check 1: Normal fuzzy match (Good for standard sentences)
+                if (userInput === target || getSimilarity(userInput, target) >= 0.75) {
+                    isCorrect = true;
+                    break;
+                }
+                
+                // Check 2: Order-independent fuzzy match (Good for lists and long names)
+                if (sortedUserInput === sortedTarget || getSimilarity(sortedUserInput, sortedTarget) >= 0.75) {
+                    isCorrect = true;
+                    break;
+                }
+            }
 
             if (isCorrect) {
-                logAttempt(currentDayObject.day, userAnswer, "Correct"); // Log the win
+                logAttempt(currentDayObject.day, rawInput, "Correct"); // Log the exact input
                 
                 if (!solvedDays.includes(currentDayObject.day)) {
                     solvedDays.push(currentDayObject.day);
@@ -364,7 +410,7 @@
                 document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
                 showRewardUI();
             } else {
-                logAttempt(currentDayObject.day, userAnswer, "Incorrect"); // Log the fail
+                logAttempt(currentDayObject.day, rawInput, "Incorrect"); // Log the exact input
 
                 document.getElementById('feedbackMessage').style.display = "block";
                 const input = document.getElementById('answerInput');
@@ -380,7 +426,6 @@
             document.getElementById('itemSection').style.display = "block";
             
             if (currentDayObject) {
-                // Item is now just the Day based on the object
                 const listName = "Day " + currentDayObject.day + " Wishlist";
                 
                 document.getElementById('itemName').innerText = listName;

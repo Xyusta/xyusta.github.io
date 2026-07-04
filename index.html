@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bryce's 25 Days of Christmas Wishlist</title>
     <style>
+        /* Ensures padding and borders don't add to the width of elements */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background-color: #0b3d0b; 
@@ -29,6 +34,7 @@
         .puzzle-wrapper {
             margin: 0 auto 40px auto;
             max-width: 600px; 
+            width: 100%; /* Ensures it scales down on smaller screens */
         }
         .puzzle-container {
             display: grid;
@@ -64,7 +70,7 @@
         }
         .puzzle-piece.revealed {
             opacity: 0; 
-            pointer-events: none; /* Prevents clicking on revealed squares */
+            pointer-events: none; 
         }
 
         /* Modal Styles */
@@ -105,7 +111,7 @@
         
         input[type="text"] {
             padding: 12px;
-            width: 80%;
+            width: 90%; /* Increased relative width slightly for padding safety */
             margin-top: 15px;
             border: 2px solid #0b3d0b;
             border-radius: 8px;
@@ -146,13 +152,13 @@
             margin-top: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             transition: transform 0.2s;
+            word-wrap: break-word; /* Prevents long text from breaking the button */
         }
         .giftful-btn:hover {
             transform: scale(1.05);
             background-color: #b71c1c;
         }
 
-        /* Reset Button Styling */
         .reset-btn {
             background-color: transparent;
             color: #888;
@@ -168,6 +174,51 @@
             color: #fff;
             border-color: #d32f2f;
             background-color: #d32f2f;
+        }
+
+        /* --- MOBILE RESPONSIVE TWEAKS --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px; /* Less empty space on the edges */
+            }
+            h1 {
+                font-size: 1.8em; /* Shrink title */
+            }
+            p {
+                font-size: 1em;
+            }
+            .puzzle-container {
+                border-width: 4px; /* Thinner border to maximize puzzle space */
+            }
+            .puzzle-piece {
+                font-size: 1.2em; /* Prevents numbers from overflowing the small boxes */
+                border-width: 1px;
+            }
+            .modal-content {
+                padding: 20px 15px; /* Less inner padding so text has room to breathe */
+                width: 95%;
+                margin: 25% auto; /* Pushes it down slightly so the mobile keyboard doesn't cover the input */
+            }
+            .close {
+                right: 15px;
+                font-size: 28px;
+            }
+            #modalDayTitle {
+                font-size: 1.8em !important;
+            }
+            #riddleText {
+                font-size: 1.1em !important;
+            }
+            input[type="text"] {
+                font-size: 1em;
+            }
+            button, .giftful-btn {
+                font-size: 1em;
+                padding: 12px 16px;
+            }
+            .revealed-item h3 {
+                font-size: 1.5em;
+            }
         }
     </style>
 </head>
@@ -206,11 +257,9 @@
 
     <script>
         // --- GOOGLE SHEETS WEBHOOK URL ---
-        // You will replace this string with the URL generated in Part 2.
         const TRACKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQSVppLcXZyp6mPxK7rWOw7cHWHmQRGBnWuQwZ6GGdysrZZK6KrMQfhSaY36dESRGI/exec"; 
 
         // --- YOUR WISHLIST DATA ---
-        // Answers are now arrays to accept multiple variations. All strings must be lowercase.
         const wishlistData = [
             { day: 1, riddle: "Starting off incredibly easy, what college did I graduate from?", answer: ["the ohio state university", "ohio state", "osu"], giftfulLink: "https://giftful.com/link-1" },
             { day: 2, riddle: "Whew, I'm glad you stuck around for Day 2. What degree did I graduate with?", answer: ["bachelor of science in electrical and computer engineering", "electrical and computer engineering", "ece", "computer and electrical engineering"], giftfulLink: "https://giftful.com/link-2" },
@@ -227,7 +276,7 @@
             { day: 13, riddle: "What was my jersey number my freshman year of highschool?", answer: ["8", "eight"], giftfulLink: "https://giftful.com/link-13" },
             { day: 14, riddle: "True or False, I have 20:20 vision?", answer: ["false", "f"], giftfulLink: "https://giftful.com/link-14" },
             { day: 15, riddle: "Speaking of vision, what do I struggle to see sometimes?", answer: ["colors", "color"], giftfulLink: "https://giftful.com/link-15" },
-            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["oscilloscope"], giftfulLink: "https://giftful.com/link-16" }, // Note: You might want to update this answer array based on the real coffee order!
+            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["oscilloscope"], giftfulLink: "https://giftful.com/link-16" }, 
             { day: 17, riddle: "Some people are book worms, due to my hoarding tendencies I happen to be a book dragon... how many books are required to be considered a private library?", answer: ["1000", "1,000", "one thousand"], giftfulLink: "https://giftful.com/link-17" },
             { day: 18, riddle: "What is my go to type of beer?", answer: ["hazy ipa", "ipa", "hazy"], giftfulLink: "https://giftful.com/link-18" },
             { day: 19, riddle: "What is my favorite Disney park?", answer: ["epcot"], giftfulLink: "https://giftful.com/link-19" },
@@ -291,35 +340,35 @@
         }
 
         function logAttempt(day, guess, status) {
-    if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
+            if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
 
-    fetch(TRACKING_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ day: day, guess: guess, status: status })
-    }).catch(error => console.error("Error logging attempt:", error));
-}
-
-function checkAnswer() {
-    const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
-    const isCorrect = currentDayObject.answer.includes(userAnswer);
-
-    if (isCorrect) {
-        logAttempt(currentDayObject.day, userAnswer, "Correct"); // Log the win
-        
-        if (!solvedDays.includes(currentDayObject.day)) {
-            solvedDays.push(currentDayObject.day);
-            localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
+            fetch(TRACKING_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ day: day, guess: guess, status: status })
+            }).catch(error => console.error("Error logging attempt:", error));
         }
-        
-        document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
-        showRewardUI();
-    } else {
-        logAttempt(currentDayObject.day, userAnswer, "Incorrect"); // Log the fail
 
-        document.getElementById('feedbackMessage').style.display = "block";
-        const input = document.getElementById('answerInput');
-        input.style.transform = "translateX(-10px)";
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+            const isCorrect = currentDayObject.answer.includes(userAnswer);
+
+            if (isCorrect) {
+                logAttempt(currentDayObject.day, userAnswer, "Correct"); // Log the win
+                
+                if (!solvedDays.includes(currentDayObject.day)) {
+                    solvedDays.push(currentDayObject.day);
+                    localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
+                }
+                
+                document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
+                showRewardUI();
+            } else {
+                logAttempt(currentDayObject.day, userAnswer, "Incorrect"); // Log the fail
+
+                document.getElementById('feedbackMessage').style.display = "block";
+                const input = document.getElementById('answerInput');
+                input.style.transform = "translateX(-10px)";
                 setTimeout(() => input.style.transform = "translateX(10px)", 50);
                 setTimeout(() => input.style.transform = "translateX(-10px)", 100);
                 setTimeout(() => input.style.transform = "translateX(0)", 150);

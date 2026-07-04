@@ -41,35 +41,53 @@
             grid-template-rows: repeat(5, 1fr);
             width: 100%;
             aspect-ratio: 1 / 1; 
-            background-image: url('https://picsum.photos/seed/christmas/600/600'); 
-            background-size: cover;
-            background-position: center;
             border: 6px solid #ffd700;
             border-radius: 10px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6);
             overflow: hidden;
+            background-color: #222; /* Dark background behind pieces */
         }
+        
+        /* Individual Pieces now hold the background image */
         .puzzle-piece {
-            background-color: #d32f2f; 
-            border: 2px solid #b71c1c;
-            transition: opacity 0.8s ease-in-out, background-color 0.2s, transform 0.1s;
+            position: relative; 
+            border: 1px solid #b71c1c;
+            cursor: pointer;
+            background-size: 500% 500%; /* Spans the image across a 5x5 grid */
+            transition: transform 0.2s, border 0.2s;
+        }
+        
+        /* Jigsaw Highlight State */
+        .puzzle-piece.selected {
+            border: 4px solid #ffd700;
+            z-index: 5;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        /* The Red Cover with the Number */
+        .piece-cover {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d32f2f;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffd700;
             font-size: 1.8em;
             font-weight: bold;
-            cursor: pointer;
+            transition: opacity 0.8s ease-in-out, background-color 0.2s;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-        }
-        .puzzle-piece:not(.revealed):hover {
-            background-color: #f44336; 
-            transform: scale(1.02);
             z-index: 2;
         }
-        .puzzle-piece.revealed {
+        
+        .puzzle-piece:not(.jigsaw-mode) .piece-cover:not(.revealed):hover {
+            background-color: #f44336; 
+        }
+        
+        .piece-cover.revealed {
             opacity: 0; 
-            pointer-events: none; 
+            pointer-events: none; /* Allows clicks to pass through to the piece behind it */
         }
 
         /* Modal Styles */
@@ -181,26 +199,19 @@
             h1 { font-size: 1.8em; }
             p { font-size: 1em; }
             .puzzle-container { border-width: 4px; }
-            .puzzle-piece {
+            .piece-cover {
                 font-size: 1.2em; 
-                border-width: 1px;
             }
             .modal-content {
                 padding: 20px 15px; 
                 width: 95%;
                 margin: 25% auto; 
             }
-            .close {
-                right: 15px;
-                font-size: 28px;
-            }
+            .close { right: 15px; font-size: 28px; }
             #modalDayTitle { font-size: 1.8em !important; }
             #riddleText { font-size: 1.1em !important; }
             input[type="text"] { font-size: 1em; }
-            button, .giftful-btn {
-                font-size: 1em;
-                padding: 12px 16px;
-            }
+            button, .giftful-btn { font-size: 1em; padding: 12px 16px; }
             .revealed-item h3 { font-size: 1.5em; }
         }
     </style>
@@ -208,7 +219,7 @@
 <body>
 
     <h1>🎄 Bryce's 25 Days of Christmas Wishlist 🎄</h1>
-    <p>Click a square and solve the riddle to reveal the picture and unlock the gift!</p>
+    <p id="instructionText">Click a square and solve the riddle to reveal the picture and unlock the gift!</p>
 
     <div class="puzzle-wrapper">
         <div class="puzzle-container" id="puzzleContainer">
@@ -219,7 +230,7 @@
 
     <div id="riddleModal" class="modal">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" onclick="closeModal('riddleModal')">&times;</span>
             <h2 id="modalDayTitle" style="color: #0b3d0b; font-size: 2.2em; margin-top: 0;">Day X</h2>
             
             <div id="riddleSection">
@@ -238,11 +249,22 @@
         </div>
     </div>
 
-    <script>
-        // --- GOOGLE SHEETS WEBHOOK URL ---
-        const TRACKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQSVppLcXZyp6mPxK7rWOw7cHWHmQRGBnWuQwZ6GGdysrZZK6KrMQfhSaY36dESRGI/exec"; 
+    <div id="victoryModal" class="modal">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close" onclick="closeModal('victoryModal')">&times;</span>
+            <h2 style="color: #d32f2f; font-size: 2.5em; margin-top: 0;">🏆 Puzzle Solved! 🏆</h2>
+            <p style="font-size: 1.3em; line-height: 1.5;">You solved all 25 riddles and reconstructed the final image! Merry Christmas!</p>
+            <p style="font-size: 2em; margin-bottom: 0;">🎄🎁❄️</p>
+        </div>
+    </div>
 
-        // --- YOUR WISHLIST DATA ---
+    <script>
+        // --- CONFIGURATION ---
+        const TRACKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQSVppLcXZyp6mPxK7rWOw7cHWHmQRGBnWuQwZ6GGdysrZZK6KrMQfhSaY36dESRGI/exec"; 
+        
+        // Pointing to a file in the exact same folder as your index.html
+        const PUZZLE_IMAGE_URL = "./our-christmas-photo.jpg";
+
         const wishlistData = [
             { day: 1, riddle: "Starting off incredibly easy, what college did I graduate from?", answer: ["the ohio state university", "ohio state", "osu"], giftfulLink: "https://giftful.com/link-1" },
             { day: 2, riddle: "Whew, I'm glad you stuck around for Day 2. What degree did I graduate with?", answer: ["bachelor of science in electrical and computer engineering", "electrical and computer engineering", "ece", "computer and electrical engineering"], giftfulLink: "https://giftful.com/link-2" },
@@ -259,7 +281,7 @@
             { day: 13, riddle: "What was my jersey number my freshman year of highschool?", answer: ["8", "eight"], giftfulLink: "https://giftful.com/link-13" },
             { day: 14, riddle: "True or False, I have 20:20 vision?", answer: ["false", "f"], giftfulLink: "https://giftful.com/link-14" },
             { day: 15, riddle: "Speaking of vision, what do I struggle to see sometimes?", answer: ["colors", "color"], giftfulLink: "https://giftful.com/link-15" },
-            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["oscilloscope"], giftfulLink: "https://giftful.com/link-16" }, 
+            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["black", "french vanilla", "dunkin french vanilla", "iced chai latte", "chai latte", "vanilla sweet cream cold brew"], giftfulLink: "https://giftful.com/link-16" }, 
             { day: 17, riddle: "Some people are book worms, due to my hoarding tendencies I happen to be a book dragon... how many books are required to be considered a private library?", answer: ["1000", "1,000", "one thousand"], giftfulLink: "https://giftful.com/link-17" },
             { day: 18, riddle: "What is my go to type of beer?", answer: ["hazy ipa", "ipa", "hazy"], giftfulLink: "https://giftful.com/link-18" },
             { day: 19, riddle: "What is my favorite Disney park?", answer: ["epcot"], giftfulLink: "https://giftful.com/link-19" },
@@ -267,34 +289,86 @@
             { day: 21, riddle: "I happen to enjoy gaming, to do so I have built 2 of these?", answer: ["computers", "pcs", "computer", "pc"], giftfulLink: "https://giftful.com/link-21" },
             { day: 22, riddle: "What book series did Khali get her name from?", answer: ["game of thrones", "got", "a song of ice and fire", "asoiaf"], giftfulLink: "https://giftful.com/link-22" },
             { day: 23, riddle: "How long, to the closest year, have Rachel and I been dating?", answer: ["5", "five", "5 years", "five years"], giftfulLink: "https://giftful.com/link-23" },
-            { day: 24, riddle: "Where did my mom come up with my name?", answer: ["a favorite student", "student", "her student", "a student"], giftfulLink: "https://giftful.com/link-24" },
+            { day: 24, riddle: "Where did my mom come up with my name?", answer: ["a favorite student teacher", "student teacher", "her student teacher", "a student teacher"], giftfulLink: "https://giftful.com/link-24" },
             { day: 25, riddle: "What is Khaleesi's full legal name?", answer: ["daenerys stormborn of the house targaryen, first of her name, the unburnt, queen of the andals, the rhoynar, and the first men, protector of the seven kingdoms, the khaleesi of the great grass sea, the breaker of chains, and the mother of dragons"], giftfulLink: "https://giftful.com/link-25" }
         ];
 
         let solvedDays = JSON.parse(localStorage.getItem('solvedChristmasDays')) || [];
         let currentDayObject = null;
+        
+        // --- JIGSAW STATE LOGIC ---
+        let shuffledPositions = JSON.parse(localStorage.getItem('shuffledPositions'));
+        const correctPositions = [];
+        let selectedJigsawPiece = null;
+        let isJigsawMode = false;
+
+        // Generate the 25 correct background coordinates (5x5 grid using percentages)
+        for (let i = 0; i < 25; i++) {
+            let row = Math.floor(i / 5);
+            let col = i % 5;
+            correctPositions.push(`${col * 25}% ${row * 25}%`);
+        }
+
+        // Scramble them if they haven't been scrambled yet
+        if (!shuffledPositions) {
+            shuffledPositions = [...correctPositions].sort(() => Math.random() - 0.5);
+            localStorage.setItem('shuffledPositions', JSON.stringify(shuffledPositions));
+        }
 
         const puzzleContainer = document.getElementById('puzzleContainer');
-        const modal = document.getElementById("riddleModal");
+        const riddleModal = document.getElementById("riddleModal");
+        const victoryModal = document.getElementById("victoryModal");
 
         function initApp() {
             puzzleContainer.innerHTML = '';
             
+            // Check if they are ready for Phase 2
+            isJigsawMode = (solvedDays.length === 25);
+            if (isJigsawMode) {
+                document.getElementById('instructionText').innerText = "Phase 2: Click to swap the pieces and reconstruct the image!";
+            }
+            
             for (let i = 1; i <= 25; i++) {
+                let pieceIndex = i - 1;
+                
                 let puzzlePiece = document.createElement('div');
                 puzzlePiece.className = 'puzzle-piece';
                 puzzlePiece.id = 'puzzle-piece-' + i;
-                puzzlePiece.innerText = i; 
                 
-                puzzlePiece.onclick = () => openModal(i);
+                // Set the sliced background image
+                puzzlePiece.style.backgroundImage = `url(${PUZZLE_IMAGE_URL})`;
+                puzzlePiece.style.backgroundPosition = shuffledPositions[pieceIndex];
+                
+                // Store tracking data on the HTML element
+                puzzlePiece.dataset.correctPosition = correctPositions[pieceIndex];
+                puzzlePiece.dataset.currentIndex = pieceIndex;
+                puzzlePiece.dataset.day = i;
 
+                // Create the red cover block
+                let cover = document.createElement('div');
+                cover.className = 'piece-cover';
+                cover.innerText = i;
                 if (solvedDays.includes(i)) {
-                    puzzlePiece.classList.add('revealed');
+                    cover.classList.add('revealed');
                 }
+                puzzlePiece.appendChild(cover);
+                
+                // Click Routing based on Phase
+                puzzlePiece.onclick = function() {
+                    if (isJigsawMode) {
+                        handleJigsawClick(this);
+                    } else {
+                        openModal(i);
+                    }
+                };
 
                 puzzleContainer.appendChild(puzzlePiece);
             }
+            
+            if (isJigsawMode) checkJigsawWin(false); // Check silently on load
         }
+
+        // --- RIDDLE PHASE LOGIC ---
 
         function openModal(dayNumber) {
             currentDayObject = wishlistData.find(d => d.day === dayNumber);
@@ -315,16 +389,15 @@
                 document.getElementById('itemSection').innerHTML = "<p>I haven't added a riddle for this day yet! ❄️</p>";
             }
             
-            modal.style.display = "block";
+            riddleModal.style.display = "block";
         }
 
-        function closeModal() {
-            modal.style.display = "none";
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
         }
 
         function logAttempt(day, guess, status) {
             if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
-
             fetch(TRACKING_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
@@ -332,37 +405,26 @@
             }).catch(error => console.error("Error logging attempt:", error));
         }
 
-        // --- FUZZY MATCHING HELPERS ---
-
-        // Removes punctuation, extra spaces, and converts to lowercase
         function cleanString(str) {
             return str.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s{2,}/g, " ").trim().toLowerCase();
         }
 
-        // Calculates similarity percentage between two strings (0.0 to 1.0)
         function getSimilarity(s1, s2) {
-            let longer = s1;
-            let shorter = s2;
-            if (s1.length < s2.length) {
-                longer = s2;
-                shorter = s1;
-            }
+            let longer = s1; let shorter = s2;
+            if (s1.length < s2.length) { longer = s2; shorter = s1; }
             let longerLength = longer.length;
             if (longerLength === 0) return 1.0;
-            
             let costs = [];
             for (let i = 0; i <= longer.length; i++) {
                 let lastValue = i;
                 for (let j = 0; j <= shorter.length; j++) {
-                    if (i === 0) {
-                        costs[j] = j;
-                    } else if (j > 0) {
+                    if (i === 0) { costs[j] = j; } 
+                    else if (j > 0) {
                         let newValue = costs[j - 1];
                         if (longer.charAt(i - 1) !== shorter.charAt(j - 1)) {
                             newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
                         }
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
+                        costs[j - 1] = lastValue; lastValue = newValue;
                     }
                 }
                 if (i > 0) costs[shorter.length] = lastValue;
@@ -371,47 +433,48 @@
         }
 
         function checkAnswer() {
-            // Grab exactly what the user typed
             const rawInput = document.getElementById('answerInput').value;
-            // Clean it up for the algorithm
             const userInput = cleanString(rawInput);
-            
-            // Create an alphabetically sorted version of the user's input for order-independent checking
             const sortedUserInput = userInput.split(' ').sort().join(' ');
-            
             let isCorrect = false;
 
-            // Check against all variations in the answer array
             for (let acceptedAnswer of currentDayObject.answer) {
                 const target = cleanString(acceptedAnswer);
                 const sortedTarget = target.split(' ').sort().join(' ');
                 
-                // Check 1: Normal fuzzy match (Good for standard sentences)
                 if (userInput === target || getSimilarity(userInput, target) >= 0.75) {
-                    isCorrect = true;
-                    break;
+                    isCorrect = true; break;
                 }
-                
-                // Check 2: Order-independent fuzzy match (Good for lists and long names)
                 if (sortedUserInput === sortedTarget || getSimilarity(sortedUserInput, sortedTarget) >= 0.75) {
-                    isCorrect = true;
-                    break;
+                    isCorrect = true; break;
                 }
             }
 
             if (isCorrect) {
-                logAttempt(currentDayObject.day, rawInput, "Correct"); // Log the exact input
+                logAttempt(currentDayObject.day, rawInput, "Correct"); 
                 
                 if (!solvedDays.includes(currentDayObject.day)) {
                     solvedDays.push(currentDayObject.day);
                     localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
                 }
                 
-                document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
+                // Hide the red cover
+                const pieceCover = document.getElementById('puzzle-piece-' + currentDayObject.day).querySelector('.piece-cover');
+                pieceCover.classList.add('revealed');
+                
                 showRewardUI();
-            } else {
-                logAttempt(currentDayObject.day, rawInput, "Incorrect"); // Log the exact input
+                
+                // Check if they just unlocked the final jigsaw phase
+                if (solvedDays.length === 25 && !isJigsawMode) {
+                    setTimeout(() => {
+                        closeModal('riddleModal');
+                        alert("Phase 1 Complete! The board is now unlocked. Click to swap the pieces and fix the image!");
+                        initApp(); // Re-render board to attach jigsaw click handlers
+                    }, 1500);
+                }
 
+            } else {
+                logAttempt(currentDayObject.day, rawInput, "Incorrect"); 
                 document.getElementById('feedbackMessage').style.display = "block";
                 const input = document.getElementById('answerInput');
                 input.style.transform = "translateX(-10px)";
@@ -427,7 +490,6 @@
             
             if (currentDayObject) {
                 const listName = "Day " + currentDayObject.day + " Wishlist";
-                
                 document.getElementById('itemName').innerText = listName;
                 document.getElementById('giftfulLink').href = currentDayObject.giftfulLink;
                 document.getElementById('itemSection').innerHTML = `
@@ -437,27 +499,85 @@
                 `;
             }
         }
-        
+
+        // --- JIGSAW PHASE LOGIC ---
+
+        function handleJigsawClick(clickedPiece) {
+            if (!selectedJigsawPiece) {
+                // First click: select the piece
+                selectedJigsawPiece = clickedPiece;
+                clickedPiece.classList.add('selected');
+            } else {
+                // Second click: Swap them
+                if (selectedJigsawPiece !== clickedPiece) {
+                    // Swap visuals
+                    let tempPos = selectedJigsawPiece.style.backgroundPosition;
+                    selectedJigsawPiece.style.backgroundPosition = clickedPiece.style.backgroundPosition;
+                    clickedPiece.style.backgroundPosition = tempPos;
+
+                    // Swap memory (so it saves on refresh)
+                    let idx1 = selectedJigsawPiece.dataset.currentIndex;
+                    let idx2 = clickedPiece.dataset.currentIndex;
+                    let tempArrPos = shuffledPositions[idx1];
+                    shuffledPositions[idx1] = shuffledPositions[idx2];
+                    shuffledPositions[idx2] = tempArrPos;
+                    
+                    localStorage.setItem('shuffledPositions', JSON.stringify(shuffledPositions));
+                }
+
+                // Deselect
+                selectedJigsawPiece.classList.remove('selected');
+                selectedJigsawPiece = null;
+
+                checkJigsawWin(true);
+            }
+        }
+
+        function checkJigsawWin(showModal) {
+            let isWin = true;
+            document.querySelectorAll('.puzzle-piece').forEach(piece => {
+                if (piece.style.backgroundPosition !== piece.dataset.correctPosition) {
+                    isWin = false;
+                }
+            });
+            
+            if (isWin && showModal) {
+                setTimeout(() => {
+                    victoryModal.style.display = "block";
+                }, 300);
+            }
+        }
+
+        // --- UTILS ---
+
         function resetBoard() {
-            const confirmReset = confirm("Are you sure you want to lock all the days and hide the picture again? This cannot be undone.");
+            const confirmReset = confirm("Are you sure you want to completely lock the calendar AND re-scramble the jigsaw puzzle?");
             if (confirmReset) {
+                // 1. Wipe the local storage memory
                 localStorage.removeItem('solvedChristmasDays');
+                localStorage.removeItem('shuffledPositions'); 
+                
+                // 2. Clear the active arrays
                 solvedDays = [];
+                
+                // 3. Generate a brand new scrambled puzzle right now
+                shuffledPositions = [...correctPositions].sort(() => Math.random() - 0.5);
+                localStorage.setItem('shuffledPositions', JSON.stringify(shuffledPositions));
+                
+                // 4. Reset the game state and redraw
+                isJigsawMode = false;
+                document.getElementById('instructionText').innerText = "Click a square and solve the riddle to reveal the picture and unlock the gift!";
                 initApp();
             }
         }
 
         document.getElementById("answerInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                checkAnswer();
-            }
+            if (event.key === "Enter") { event.preventDefault(); checkAnswer(); }
         });
 
         window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
+            if (event.target == riddleModal) closeModal('riddleModal');
+            if (event.target == victoryModal) closeModal('victoryModal');
         }
 
         initApp();

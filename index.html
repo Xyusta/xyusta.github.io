@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bryce's 25 Days of Christmas Wishlist</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0b3d0b; 
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://www.transparenttextures.com/patterns/snow.png'); 
+        }
+        h1 {
+            color: #ffd700; 
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px #000000;
+            margin-bottom: 5px;
+        }
+        p { 
+            font-size: 1.2em; 
+            margin-bottom: 30px;
+        }
+        
+        /* Meta-Puzzle Image Reveal Grid */
+        .puzzle-wrapper {
+            margin: 0 auto 40px auto;
+            max-width: 600px; 
+        }
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: 100%;
+            aspect-ratio: 1 / 1; 
+            background-image: url('https://picsum.photos/seed/christmas/600/600'); 
+            background-size: cover;
+            background-position: center;
+            border: 6px solid #ffd700;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        .puzzle-piece {
+            background-color: #d32f2f; 
+            border: 2px solid #b71c1c;
+            transition: opacity 0.8s ease-in-out, background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffd700;
+            font-size: 1.8em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+        }
+        .puzzle-piece:not(.revealed):hover {
+            background-color: #f44336; 
+            transform: scale(1.02);
+            z-index: 2;
+        }
+        .puzzle-piece.revealed {
+            opacity: 0; 
+            pointer-events: none; /* Prevents clicking on revealed squares */
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 10; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.8); 
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            color: #333;
+            margin: 10% auto; 
+            padding: 30px;
+            border: 5px solid #d32f2f;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: black; }
+        
+        input[type="text"] {
+            padding: 12px;
+            width: 80%;
+            margin-top: 15px;
+            border: 2px solid #0b3d0b;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+        button {
+            padding: 12px 24px;
+            margin-top: 20px;
+            background-color: #0b3d0b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #145c14; }
+        
+        .revealed-item {
+            display: none;
+            margin-top: 10px;
+        }
+        .revealed-item h3 {
+            color: #d32f2f;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        .giftful-btn {
+            display: inline-block;
+            background-color: #d32f2f;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .giftful-btn:hover {
+            transform: scale(1.05);
+            background-color: #b71c1c;
+        }
+
+        /* Reset Button Styling */
+        .reset-btn {
+            background-color: transparent;
+            color: #888;
+            border: 1px solid #888;
+            font-size: 0.9em;
+            padding: 8px 16px;
+            margin-top: 40px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover {
+            color: #fff;
+            border-color: #d32f2f;
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎄 Bryce's 25 Days of Christmas Wishlist 🎄</h1>
+    <p>Click a square and solve the riddle to reveal the picture and unlock the gift!</p>
+
+    <div class="puzzle-wrapper">
+        <div class="puzzle-container" id="puzzleContainer">
+            </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetBoard()">Reset Progress</button>
+
+    <div id="riddleModal" class="modal">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalDayTitle" style="color: #0b3d0b; font-size: 2.2em; margin-top: 0;">Day X</h2>
+            
+            <div id="riddleSection">
+                <p id="riddleText" style="font-size: 1.3em; line-height: 1.5; margin-bottom: 20px;">Riddle goes here</p>
+                <input type="text" id="answerInput" placeholder="Type your answer here...">
+                <br>
+                <button onclick="checkAnswer()">Unlock Gift</button>
+                <p id="feedbackMessage" style="color: red; display: none; font-weight: bold; margin-top: 15px;">Incorrect, try again! 🎅</p>
+            </div>
+            
+            <div id="itemSection" class="revealed-item">
+                <p style="font-size: 1.5em; margin-bottom: 5px;">🎉 <strong>You solved it!</strong> 🎉</p>
+                <h3 id="itemName">Item Name</h3>
+                <a href="#" id="giftfulLink" class="giftful-btn" target="_blank">View & Claim on Giftful 🎁</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GOOGLE SHEETS WEBHOOK URL ---
+        // You will replace this string with the URL generated in Part 2.
+        const TRACKING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQSVppLcXZyp6mPxK7rWOw7cHWHmQRGBnWuQwZ6GGdysrZZK6KrMQfhSaY36dESRGI/exec"; 
+
+        // --- YOUR WISHLIST DATA ---
+        // Answers are now arrays to accept multiple variations. All strings must be lowercase.
+        const wishlistData = [
+            { day: 1, riddle: "Starting off incredibly easy, what college did I graduate from?", answer: ["the ohio state university", "ohio state", "osu"], giftfulLink: "https://giftful.com/link-1" },
+            { day: 2, riddle: "Whew, I'm glad you stuck around for Day 2. What degree did I graduate with?", answer: ["bachelor of science in electrical and computer engineering", "electrical and computer engineering", "ece", "computer and electrical engineering"], giftfulLink: "https://giftful.com/link-2" },
+            { day: 3, riddle: "I recently got a pet, what type of animal is she?", answer: ["cat", "a cat", "kitten"], giftfulLink: "https://giftful.com/link-3" },
+            { day: 4, riddle: "I also, recently got a job, where do I work?", answer: ["traeger", "traeger grills"], giftfulLink: "https://giftful.com/link-4" },
+            { day: 5, riddle: "What hobby do I never shut up about?", answer: ["climbing", "rock climbing", "bouldering"], giftfulLink: "https://giftful.com/link-5" },
+            { day: 6, riddle: "One device I love to use for workshopping and creating parts is called a __ printer", answer: ["3d", "3-d", "3 d"], giftfulLink: "https://giftful.com/link-6" },
+            { day: 7, riddle: "What was my college address?", answer: ["303 e 14th ave", "303 east 14th ave", "303 e 14th avenue"], giftfulLink: "https://giftful.com/link-7" },
+            { day: 8, riddle: "What car do I drive?", answer: ["mazda cx5", "mazda cx-5", "cx5", "cx-5", "mazda"], giftfulLink: "https://giftful.com/link-8" },
+            { day: 9, riddle: "What was my freshman year dorm? ", answer: ["lincoln", "lincoln tower"], giftfulLink: "https://giftful.com/link-9" },
+            { day: 10, riddle: "Name my three college roommates, first names only, alphabetically?", answer: ["aiden, jacob, sam", "aiden, jacob, and sam"], giftfulLink: "https://giftful.com/link-10" },
+            { day: 11, riddle: "I recently got a new apartment, which neighborhood of Cleveland do I now live in?", answer: ["tremont"], giftfulLink: "https://giftful.com/link-11" },
+            { day: 12, riddle: "Which country will I be in for Christmas this year?", answer: ["germany"], giftfulLink: "https://giftful.com/link-12" },
+            { day: 13, riddle: "What was my jersey number my freshman year of highschool?", answer: ["8", "eight"], giftfulLink: "https://giftful.com/link-13" },
+            { day: 14, riddle: "True or False, I have 20:20 vision?", answer: ["false", "f"], giftfulLink: "https://giftful.com/link-14" },
+            { day: 15, riddle: "Speaking of vision, what do I struggle to see sometimes?", answer: ["colors", "color"], giftfulLink: "https://giftful.com/link-15" },
+            { day: 16, riddle: "Now for an extra tricky question, well there are multiple correct answers... what is my go to coffee order?", answer: ["oscilloscope"], giftfulLink: "https://giftful.com/link-16" }, // Note: You might want to update this answer array based on the real coffee order!
+            { day: 17, riddle: "Some people are book worms, due to my hoarding tendencies I happen to be a book dragon... how many books are required to be considered a private library?", answer: ["1000", "1,000", "one thousand"], giftfulLink: "https://giftful.com/link-17" },
+            { day: 18, riddle: "What is my go to type of beer?", answer: ["hazy ipa", "ipa", "hazy"], giftfulLink: "https://giftful.com/link-18" },
+            { day: 19, riddle: "What is my favorite Disney park?", answer: ["epcot"], giftfulLink: "https://giftful.com/link-19" },
+            { day: 20, riddle: "I recently went on a road trip with my college roommates, what national park did we hike angels landing at?", answer: ["zion", "zion national park"], giftfulLink: "https://giftful.com/link-20" },
+            { day: 21, riddle: "I happen to enjoy gaming, to do so I have built 2 of these?", answer: ["computers", "pcs", "computer", "pc"], giftfulLink: "https://giftful.com/link-21" },
+            { day: 22, riddle: "What book series did Khali get her name from?", answer: ["game of thrones", "got", "a song of ice and fire", "asoiaf"], giftfulLink: "https://giftful.com/link-22" },
+            { day: 23, riddle: "How long, to the closest year, have Rachel and I been dating?", answer: ["5", "five", "5 years", "five years"], giftfulLink: "https://giftful.com/link-23" },
+            { day: 24, riddle: "Where did my mom come up with my name?", answer: ["a favorite student", "student", "her student", "a student"], giftfulLink: "https://giftful.com/link-24" },
+            { day: 25, riddle: "What is Khaleesi's full legal name?", answer: ["daenerys stormborn of the house targaryen, first of her name, the unburnt, queen of the andals, the rhoynar, and the first men, protector of the seven kingdoms, the khaleesi of the great grass sea, the breaker of chains, and the mother of dragons"], giftfulLink: "https://giftful.com/link-25" }
+        ];
+
+        let solvedDays = JSON.parse(localStorage.getItem('solvedChristmasDays')) || [];
+        let currentDayObject = null;
+
+        const puzzleContainer = document.getElementById('puzzleContainer');
+        const modal = document.getElementById("riddleModal");
+
+        function initApp() {
+            puzzleContainer.innerHTML = '';
+            
+            for (let i = 1; i <= 25; i++) {
+                let puzzlePiece = document.createElement('div');
+                puzzlePiece.className = 'puzzle-piece';
+                puzzlePiece.id = 'puzzle-piece-' + i;
+                puzzlePiece.innerText = i; 
+                
+                puzzlePiece.onclick = () => openModal(i);
+
+                if (solvedDays.includes(i)) {
+                    puzzlePiece.classList.add('revealed');
+                }
+
+                puzzleContainer.appendChild(puzzlePiece);
+            }
+        }
+
+        function openModal(dayNumber) {
+            currentDayObject = wishlistData.find(d => d.day === dayNumber);
+            document.getElementById('modalDayTitle').innerText = "Day " + dayNumber;
+            document.getElementById('answerInput').value = "";
+            document.getElementById('feedbackMessage').style.display = "none";
+
+            if (solvedDays.includes(dayNumber)) {
+                showRewardUI();
+            } else if (currentDayObject) {
+                document.getElementById('riddleSection').style.display = "block";
+                document.getElementById('itemSection').style.display = "none";
+                document.getElementById('riddleText').innerText = currentDayObject.riddle;
+                setTimeout(() => document.getElementById('answerInput').focus(), 100);
+            } else {
+                document.getElementById('riddleSection').style.display = "none";
+                document.getElementById('itemSection').style.display = "block";
+                document.getElementById('itemSection').innerHTML = "<p>I haven't added a riddle for this day yet! ❄️</p>";
+            }
+            
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        function logAttempt(day, guess) {
+            if (TRACKING_WEBHOOK_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") return;
+
+            // Sending as plain text prevents CORS preflight issues on static pages
+            fetch(TRACKING_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ day: day, guess: guess })
+            }).catch(error => console.error("Error logging attempt:", error));
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+            
+            // Check if the user's answer exists in the array of accepted answers
+            const isCorrect = currentDayObject.answer.includes(userAnswer);
+
+            if (isCorrect) {
+                if (!solvedDays.includes(currentDayObject.day)) {
+                    solvedDays.push(currentDayObject.day);
+                    localStorage.setItem('solvedChristmasDays', JSON.stringify(solvedDays));
+                }
+                
+                document.getElementById('puzzle-piece-' + currentDayObject.day).classList.add('revealed');
+                showRewardUI();
+            } else {
+                // Log the incorrect attempt to the Google Sheet
+                logAttempt(currentDayObject.day, userAnswer);
+
+                // Trigger visual shake feedback
+                document.getElementById('feedbackMessage').style.display = "block";
+                const input = document.getElementById('answerInput');
+                input.style.transform = "translateX(-10px)";
+                setTimeout(() => input.style.transform = "translateX(10px)", 50);
+                setTimeout(() => input.style.transform = "translateX(-10px)", 100);
+                setTimeout(() => input.style.transform = "translateX(0)", 150);
+            }
+        }
+
+        function showRewardUI() {
+            document.getElementById('riddleSection').style.display = "none";
+            document.getElementById('itemSection').style.display = "block";
+            
+            if (currentDayObject) {
+                // Item is now just the Day based on the object
+                const listName = "Day " + currentDayObject.day + " Wishlist";
+                
+                document.getElementById('itemName').innerText = listName;
+                document.getElementById('giftfulLink').href = currentDayObject.giftfulLink;
+                document.getElementById('itemSection').innerHTML = `
+                    <p style="font-size: 1.5em; margin-bottom: 5px;">🎉 <strong>You solved it!</strong> 🎉</p>
+                    <h3 id="itemName">${listName}</h3>
+                    <a href="${currentDayObject.giftfulLink}" class="giftful-btn" target="_blank">View & Claim on Giftful 🎁</a>
+                `;
+            }
+        }
+        
+        function resetBoard() {
+            const confirmReset = confirm("Are you sure you want to lock all the days and hide the picture again? This cannot be undone.");
+            if (confirmReset) {
+                localStorage.removeItem('solvedChristmasDays');
+                solvedDays = [];
+                initApp();
+            }
+        }
+
+        document.getElementById("answerInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                checkAnswer();
+            }
+        });
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
